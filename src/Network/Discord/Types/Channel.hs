@@ -49,7 +49,9 @@ module Network.Discord.Types.Channel where
     = Text
         { channelId          :: Snowflake   -- ^ The id of the channel (Will be equal to
                                             --   the guild if it's the "general" channel).
+        , channelParent      :: Snowflake   -- ^ The id of the parent category for a channel.
         , channelGuild       :: Snowflake   -- ^ The id of the guild.
+        , channelNsfw        :: Bool        -- ^ NSFW status of the channel.
         , channelName        :: String      -- ^ The name of the guild (2 - 1000 characters).
         , channelPosition    :: Integer     -- ^ The storing position of the channel.
         , channelPermissions :: [Overwrite] -- ^ An array of permission 'Overwrite's
@@ -57,9 +59,19 @@ module Network.Discord.Types.Channel where
         , channelLastMessage :: Snowflake   -- ^ The id of the last message sent in the
                                             --   channel
         }
-    -- |A voice channel in a guild.
+    -- | A category channel in a guild.
+    | Category
+        { channelId :: Snowflake
+        , channelGuild :: Snowflake
+        , channelNsfw :: Bool
+        , channelName :: String
+        , channelPosition :: Integer
+        , channelPermissions :: [Overwrite]
+        }
+    -- | A voice channel in a guild.
     | Voice
         { channelId:: Snowflake
+        , channelParent:: Snowflake
         , channelGuild:: Snowflake
         , channelName:: String
         , channelPosition:: Integer
@@ -76,12 +88,14 @@ module Network.Discord.Types.Channel where
         } deriving (Show, Eq)
 
   instance FromJSON Channel where
-    parseJSON = withObject "text or voice" $ \o -> do
+    parseJSON = withObject "text or category or voice" $ \o -> do
       type' <- (o .: "type") :: Parser Int
       case type' of
         0 ->
             Text  <$> o .:  "id"
+                  <*> o .:  "parent_id"
                   <*> o .:  "guild_id"
+                  <*> o .:  "nsfw"
                   <*> o .:  "name"
                   <*> o .:  "position"
                   <*> o .:  "permission_overwrites"
@@ -93,12 +107,20 @@ module Network.Discord.Types.Channel where
                           <*> o .:? "last_message_id" .!= 0
         2 ->
             Voice <$> o .: "id"
+                  <*> o .: "parent_id"
                   <*> o .: "guild_id"
                   <*> o .: "name"
                   <*> o .: "position"
                   <*> o .: "permission_overwrites"
                   <*> o .: "bitrate"
                   <*> o .: "user_limit"
+        4 ->
+            Category <$> o .: "id"
+                     <*> o .: "guild_id"
+                     <*> o .: "nsfw"
+                     <*> o .: "name"
+                     <*> o .: "position"
+                     <*> o .: "permission_overwrites"
         _ -> mzero
 
   -- | Permission overwrites for a channel.
