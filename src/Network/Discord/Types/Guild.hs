@@ -67,6 +67,7 @@ module Network.Discord.Types.Guild where
   -- | Represents an emoticon (emoji)
   data Emoji = Emoji
     { emojiId      :: {-# UNPACK #-} !Snowflake   -- ^ The emoji id
+    , emojiAnimated::                 Bool        -- ^ Whether this emoji is animated
     , emojiName    ::                 String      -- ^ The emoji name
     , emojiRoles   ::                ![Snowflake] -- ^ Roles the emoji is active for
     , emojiManaged ::                !Bool        -- ^ Whether this emoji is managed
@@ -75,6 +76,7 @@ module Network.Discord.Types.Guild where
   instance FromJSON Emoji where
     parseJSON (Object o) =
       Emoji <$> o .: "id"
+            <*> o .: "animated"
             <*> o .: "name"
             <*> o .: "roles"
             <*> o .: "managed"
