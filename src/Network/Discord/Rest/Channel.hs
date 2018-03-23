@@ -33,6 +33,16 @@ module Network.Discord.Rest.Channel
       GetChannelMessage       :: Snowflake -> Snowflake -> ChannelRequest Message
       -- | Sends a message to a channel.
       CreateMessage           :: Snowflake -> Text -> Maybe Embed -> ChannelRequest Message
+      -- | Creates a reaction.
+      CreateReaction          :: Snowflake -> Snowflake -> Text -> ChannelRequest ()
+      -- | Deletes a reaction owned by self user.
+      DeleteOwnReaction       :: Snowflake -> Snowflake -> Text -> ChannelRequest ()
+      -- | Deletes a reaction owned by another user.
+      DeleteReaction          :: Snowflake -> Snowflake -> Text -> Snowflake -> ChannelRequest ()
+      -- | Deletes all reactions on a message.
+      DeleteAllReactions      :: Snowflake -> Snowflake -> ChannelRequest ()
+      -- | Gets all reactions by emoji on a message.
+      GetReactions            :: Snowflake -> Snowflake -> Text -> ChannelRequest [User]
       -- | Sends a message with a file to a channel.
       UploadFile              :: Snowflake -> FilePath -> ByteString -> ChannelRequest Message
       -- | Edits a message content.
@@ -65,6 +75,11 @@ module Network.Discord.Rest.Channel
       hashWithSalt s (GetChannelMessages chan _) = hashWithSalt s ("msg"::Text, chan)
       hashWithSalt s (GetChannelMessage chan _) = hashWithSalt s ("get_msg"::Text, chan)
       hashWithSalt s (CreateMessage chan _ _) = hashWithSalt s ("msg"::Text, chan)
+      hashWithSalt s (CreateReaction chan _ _) = hashWithSalt s ("msg"::Text, chan)
+      hashWithSalt s (DeleteOwnReaction chan _ _) = hashWithSalt s ("msg"::Text, chan)
+      hashWithSalt s (DeleteReaction chan _ _ _) = hashWithSalt s ("msg"::Text, chan)
+      hashWithSalt s (DeleteAllReactions chan _) = hashWithSalt s ("msg"::Text, chan)
+      hashWithSalt s (GetReactions chan _ _) = hashWithSalt s ("msg"::Text, chan)
       hashWithSalt s (UploadFile chan _ _)  = hashWithSalt s ("msg"::Text, chan)
       hashWithSalt s (EditMessage (Message _ chan _ _ _ _ _ _ _ _ _ _ _ _) _ _) =
         hashWithSalt s ("get_msg"::Text, chan)
@@ -104,6 +119,17 @@ module Network.Discord.Rest.Channel
             $ Post (url // chan /: "messages")
               (ReqBodyJson . object $ ["content" .= msg] <> maybeEmbed embed)
               mempty
+          go r@(CreateReaction chan msg emoji) = makeRequest r
+            $ Put (url // chan /: "messages" // msg /: "reactions" /: emoji /: "@me")
+              NoReqBody mempty
+          go r@(DeleteOwnReaction chan msg emoji) = makeRequest r
+            $ Delete (url // chan /: "messages" // msg /: "reactions" /: emoji /: "@me") mempty
+          go r@(DeleteReaction chan msg emoji user) = makeRequest r
+            $ Delete (url // chan /: "messages" // msg /: "reactions" /: emoji // user) mempty
+          go r@(DeleteAllReactions chan msg) = makeRequest r
+            $ Delete (url // chan /: "messages" // msg /: "reactions") mempty
+          go r@(GetReactions chan msg emoji) = makeRequest r
+            $ Get (url // chan /: "messages" // msg /: "reactions" /: emoji) mempty
           go r@(UploadFile chan fileName file) = do
             body <- reqBodyMultipart [partFileRequestBody "file" fileName $ RequestBodyLBS file]
             makeRequest r $ Post (url // chan /: "messages")

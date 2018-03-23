@@ -28,6 +28,7 @@ module Network.Discord.Rest.Prelude where
     --   for a rate limit to reset
     getRateLimit  :: a -> DiscordM (Maybe Int)
     getRateLimit req = do
+      -- TODO: handle weird reaction endpoint ratelimits?
       DiscordState {getRateLimits=rl} <- St.get
       now <- St.liftIO (fmap round getPOSIXTime :: IO Int)
       St.liftIO . atomically $ do
