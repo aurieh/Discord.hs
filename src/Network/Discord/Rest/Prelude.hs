@@ -5,7 +5,6 @@
 module Network.Discord.Rest.Prelude where
   import Control.Concurrent (threadDelay)
 
-  import Control.Comonad
   import Control.Concurrent.STM
   import Data.Aeson
   import Data.Default
