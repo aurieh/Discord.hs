@@ -118,3 +118,9 @@ module Network.Discord.Types.Gateway where
         Right payload -> payload
         Left  reason  -> ParseError reason
     toLazyByteString   = encode
+    fromDataMessage (Text bs _) = case eitherDecode bs of
+      Right payload -> payload
+      Left  reason  -> ParseError reason
+    fromDataMessage (Binary bs) = case eitherDecode bs of
+      Right payload -> payload
+      Left  reason  -> ParseError reason
